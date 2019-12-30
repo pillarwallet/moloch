@@ -1,8 +1,9 @@
 pragma solidity 0.5.3;
 
-import "./oz/SafeMath.sol";
-import "./oz/IERC20.sol";
-import "./GuildBank.sol";
+import "./SafeMath.sol";
+import "./IERC20.sol";
+import "./SafeGuildBank.sol";
+import "./ERC20Wrapper.sol";
 
 contract Moloch {
     using SafeMath for uint256;
@@ -165,10 +166,10 @@ contract Moloch {
         address memberAddress = memberAddressByDelegateKey[msg.sender];
 
         // collect proposal deposit from proposer and store it in the Moloch until the proposal is processed
-        require(approvedToken.transferFrom(msg.sender, address(this), proposalDeposit), "Moloch::submitProposal - proposal deposit token transfer failed");
+        require(ERC20Wrapper.transferFrom(address(approvedToken), msg.sender, address(this), proposalDeposit), "Moloch::submitProposal - proposal deposit token transfer failed");
 
         // collect tribute from applicant and store it in the Moloch until the proposal is processed
-        require(approvedToken.transferFrom(applicant, address(this), tokenTribute), "Moloch::submitProposal - tribute token transfer failed");
+        require(ERC20Wrapper.transferFrom(address(approvedToken), applicant, address(this), tokenTribute), "Moloch::submitProposal - tribute token transfer failed");
 
         // compute startingPeriod for proposal
         uint256 startingPeriod = max(
@@ -285,7 +286,7 @@ contract Moloch {
 
             // transfer tokens to guild bank
             require(
-                approvedToken.transfer(address(guildBank), proposal.tokenTribute),
+                ERC20Wrapper.transfer(address(approvedToken), address(guildBank), proposal.tokenTribute),
                 "Moloch::processProposal - token transfer to guild bank failed"
             );
 
@@ -293,20 +294,20 @@ contract Moloch {
         } else {
             // return all tokens to the applicant
             require(
-                approvedToken.transfer(proposal.applicant, proposal.tokenTribute),
+                ERC20Wrapper.transfer(address(approvedToken), proposal.applicant, proposal.tokenTribute),
                 "Moloch::processProposal - failing vote token transfer failed"
             );
         }
 
         // send msg.sender the processingReward
         require(
-            approvedToken.transfer(msg.sender, processingReward),
+            ERC20Wrapper.transfer(address(approvedToken), msg.sender, processingReward),
             "Moloch::processProposal - failed to send processing reward to msg.sender"
         );
 
         // return deposit to proposer (subtract processing reward)
         require(
-            approvedToken.transfer(proposal.proposer, proposalDeposit.sub(processingReward)),
+            ERC20Wrapper.transfer(address(approvedToken), proposal.proposer, proposalDeposit.sub(processingReward)),
             "Moloch::processProposal - failed to return proposal deposit to proposer"
         );
 
@@ -356,7 +357,7 @@ contract Moloch {
 
         // return all tokens to the applicant
         require(
-            approvedToken.transfer(proposal.applicant, tokensToAbort),
+            ERC20Wrapper.transfer(address(approvedToken), proposal.applicant, tokensToAbort),
             "Moloch::processProposal - failed to return tribute to applicant"
         );
 
