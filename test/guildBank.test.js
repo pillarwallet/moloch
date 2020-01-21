@@ -1,6 +1,12 @@
-const { artifacts, ethereum, web3 } = require('@nomiclabs/buidler')
+const {
+  artifacts,
+  ethereum,
+  web3
+} = require('@nomiclabs/buidler')
 const chai = require('chai')
-const { assert } = chai
+const {
+  assert
+} = chai
 
 const BN = web3.utils.BN
 
@@ -8,7 +14,7 @@ chai
   .use(require('chai-as-promised'))
   .should()
 
-const GuildBank = artifacts.require('./GuildBank')
+const GuildBank = artifacts.require('./SafeGuildBank')
 const Token = artifacts.require('./Token')
 
 const deploymentConfig = {
@@ -17,11 +23,11 @@ const deploymentConfig = {
 
 const SolRevert = 'VM Exception while processing transaction: revert'
 
-async function snapshot () {
+async function snapshot() {
   return ethereum.send('evm_snapshot', [])
 }
 
-async function restore (snapshotId) {
+async function restore(snapshotId) {
   return ethereum.send('evm_revert', [snapshotId])
 }
 
@@ -29,7 +35,9 @@ contract('GuildBank', ([creator, shareHolder, random, ...otherAccounts]) => {
   let guildBank, tokens, tokenAlpha
   let snapshotId
 
-  const fromCreator = { from: creator }
+  const fromCreator = {
+    from: creator
+  }
 
   before('deploy contracts', async () => {
     tokens = [
@@ -98,8 +106,9 @@ contract('GuildBank', ([creator, shareHolder, random, ...otherAccounts]) => {
         shareHolder,
         sharesToWithdraw,
         totalDAOShares,
-        tokens.map(token => token.address),
-        { from: random }
+        tokens.map(token => token.address), {
+          from: random
+        }
       ).should.be.rejectedWith(SolRevert)
     })
   })
@@ -134,8 +143,9 @@ contract('GuildBank', ([creator, shareHolder, random, ...otherAccounts]) => {
       await guildBank.withdrawToken(
         tokenAlpha.address,
         shareHolder,
-        25,
-        { from: random }
+        25, {
+          from: random
+        }
       ).should.be.rejectedWith(SolRevert)
     })
   })

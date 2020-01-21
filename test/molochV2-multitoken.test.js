@@ -1,6 +1,12 @@
-const { artifacts, ethereum, web3 } = require('@nomiclabs/buidler')
+const {
+  artifacts,
+  ethereum,
+  web3
+} = require('@nomiclabs/buidler')
 const chai = require('chai')
-const { assert } = chai
+const {
+  assert
+} = chai
 
 const BN = web3.utils.BN
 
@@ -18,7 +24,7 @@ chai
   .should()
 
 const Moloch = artifacts.require('./Moloch')
-const GuildBank = artifacts.require('./GuildBank')
+const GuildBank = artifacts.require('./SafeGuildBank')
 const Token = artifacts.require('./Token')
 
 const SolRevert = 'VM Exception while processing transaction: revert'
@@ -31,20 +37,20 @@ const _1e18 = new BN('1000000000000000000') // 1e18
 const _10e18 = new BN('10000000000000000000') // 10e18
 const _100e18 = new BN('100000000000000000000') // 10e18
 
-async function blockTime () {
+async function blockTime() {
   const block = await web3.eth.getBlock('latest')
   return block.timestamp
 }
 
-async function snapshot () {
+async function snapshot() {
   return ethereum.send('evm_snapshot', [])
 }
 
-async function restore (snapshotId) {
+async function restore(snapshotId) {
   return ethereum.send('evm_revert', [snapshotId])
 }
 
-async function forceMine () {
+async function forceMine() {
   return ethereum.send('evm_mine', [])
 }
 
@@ -60,7 +66,7 @@ const deploymentConfig = {
   'TOKEN_SUPPLY': _100e18
 }
 
-async function moveForwardPeriods (periods) {
+async function moveForwardPeriods(periods) {
   await blockTime()
   const goToTime = deploymentConfig.PERIOD_DURATION_IN_SECONDS * periods
   await ethereum.send('evm_increaseTime', [goToTime])
@@ -88,14 +94,27 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
 
   let snapshotId
 
-  const fundAndApproveToMoloch = async ({ token, to, from, value }) => {
-    await token.transfer(to, value, { from: from })
-    await token.approve(moloch.address, value, { from: to })
+  const fundAndApproveToMoloch = async ({
+    token,
+    to,
+    from,
+    value
+  }) => {
+    await token.transfer(to, value, {
+      from: from
+    })
+    await token.approve(moloch.address, value, {
+      from: to
+    })
   }
 
   before('deploy contracts', async () => {
-    tokenAlpha = await Token.new(deploymentConfig.TOKEN_SUPPLY, { from: creator })
-    tokenBeta = await Token.new(deploymentConfig.TOKEN_SUPPLY, { from: creator })
+    tokenAlpha = await Token.new(deploymentConfig.TOKEN_SUPPLY, {
+      from: creator
+    })
+    tokenBeta = await Token.new(deploymentConfig.TOKEN_SUPPLY, {
+      from: creator
+    })
 
     moloch = await Moloch.new(
       summoner,
@@ -178,8 +197,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         proposal1.tributeToken,
         proposal1.paymentRequested,
         proposal1.paymentToken,
-        proposal1.details,
-        { from: proposal1.applicant }
+        proposal1.details, {
+          from: proposal1.applicant
+        }
       )
 
       await fundAndApproveToMoloch({
@@ -189,15 +209,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         value: deploymentConfig.PROPOSAL_DEPOSIT
       })
 
-      await moloch.sponsorProposal(firstProposalIndex, { from: summoner })
+      await moloch.sponsorProposal(firstProposalIndex, {
+        from: summoner
+      })
 
       await moveForwardPeriods(1)
-      await moloch.submitVote(firstProposalIndex, yes, { from: summoner })
+      await moloch.submitVote(firstProposalIndex, yes, {
+        from: summoner
+      })
 
       await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
       await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-      await moloch.processProposal(firstProposalIndex, { from: processor })
+      await moloch.processProposal(firstProposalIndex, {
+        from: processor
+      })
 
       await verifyBalances({
         token: depositToken,
@@ -238,8 +264,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         proposal2.tributeToken,
         proposal2.paymentRequested,
         proposal2.paymentToken,
-        proposal2.details,
-        { from: proposal2.applicant }
+        proposal2.details, {
+          from: proposal2.applicant
+        }
       )
 
       await fundAndApproveToMoloch({
@@ -249,15 +276,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         value: deploymentConfig.PROPOSAL_DEPOSIT
       })
 
-      await moloch.sponsorProposal(secondProposalIndex, { from: summoner })
+      await moloch.sponsorProposal(secondProposalIndex, {
+        from: summoner
+      })
 
       await moveForwardPeriods(1)
-      await moloch.submitVote(secondProposalIndex, yes, { from: summoner })
+      await moloch.submitVote(secondProposalIndex, yes, {
+        from: summoner
+      })
 
       await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
       await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-      await moloch.processProposal(secondProposalIndex, { from: processor })
+      await moloch.processProposal(secondProposalIndex, {
+        from: processor
+      })
 
       await verifyBalances({
         token: tokenBeta,
@@ -305,7 +338,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
       beforeEach(async () => {
         initialShares = await moloch.totalShares()
         initialLoot = await moloch.totalLoot()
-        await moloch.ragequit(sharesToQuit, 0, { from: proposal1.applicant })
+        await moloch.ragequit(sharesToQuit, 0, {
+          from: proposal1.applicant
+        })
       })
 
       it('member shares reduced', async () => {
@@ -373,8 +408,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         proposal1.tributeToken,
         proposal1.paymentRequested,
         proposal1.paymentToken,
-        proposal1.details,
-        { from: proposal1.applicant }
+        proposal1.details, {
+          from: proposal1.applicant
+        }
       )
 
       await fundAndApproveToMoloch({
@@ -384,10 +420,14 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         value: deploymentConfig.PROPOSAL_DEPOSIT
       })
 
-      await moloch.sponsorProposal(firstProposalIndex, { from: summoner })
+      await moloch.sponsorProposal(firstProposalIndex, {
+        from: summoner
+      })
 
       await moveForwardPeriods(1)
-      await moloch.submitVote(firstProposalIndex, yes, { from: summoner })
+      await moloch.submitVote(firstProposalIndex, yes, {
+        from: summoner
+      })
 
       await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
       await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
@@ -401,7 +441,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         await tokenAlpha.updateTransfersEnabled(false)
 
         // Attempt to process the proposal
-        await moloch.processProposal(firstProposalIndex, { from: processor })
+        await moloch.processProposal(firstProposalIndex, {
+            from: processor
+          })
           .should.be.rejectedWith(SolRevert)
 
         // Ensure balances do not change
@@ -410,7 +452,7 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           moloch: moloch.address,
           expectedMolochBalance: proposal1.tributeOffered, // maintains tribute from proposal
           guildBank: guildBank.address,
-          expectedGuildBankBalance: 0,  // balance of zero as failed to process
+          expectedGuildBankBalance: 0, // balance of zero as failed to process
           applicant: proposal1.applicant,
           expectedApplicantBalance: 0,
           sponsor: summoner,
@@ -437,8 +479,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         await tokenAlpha.updateTransfersReturningFalse(true)
 
         // Attempt to process the proposal
-        await moloch.processProposal(firstProposalIndex, { from: processor })
-          .should.be.rejectedWith('token transfer to guild bank failed')
+        await moloch.processProposal(firstProposalIndex, {
+          from: processor
+        }).should.be.rejectedWith('token transfer to guild bank failed')
 
         // Ensure balances do not change
         await verifyBalances({
@@ -446,7 +489,7 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           moloch: moloch.address,
           expectedMolochBalance: proposal1.tributeOffered, // maintains tribute from proposal
           guildBank: guildBank.address,
-          expectedGuildBankBalance: 0,  // balance of zero as failed to process
+          expectedGuildBankBalance: 0, // balance of zero as failed to process
           applicant: proposal1.applicant,
           expectedApplicantBalance: 0,
           sponsor: summoner,
@@ -470,7 +513,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
 
     describe('guildBank.withdrawToken()', async () => {
       it('require revert - fail to withdraw payment token with message', async function () {
-        await moloch.processProposal(firstProposalIndex, { from: processor })
+        await moloch.processProposal(firstProposalIndex, {
+          from: processor
+        })
 
         // 2nd proposal for with token beta tribute
         await fundAndApproveToMoloch({
@@ -488,8 +533,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           proposal2.tributeToken,
           proposal2.paymentRequested,
           proposal2.paymentToken,
-          proposal2.details,
-          { from: proposal2.applicant }
+          proposal2.details, {
+            from: proposal2.applicant
+          }
         )
 
         await fundAndApproveToMoloch({
@@ -499,15 +545,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           value: deploymentConfig.PROPOSAL_DEPOSIT
         })
 
-        await moloch.sponsorProposal(secondProposalIndex, { from: summoner })
+        await moloch.sponsorProposal(secondProposalIndex, {
+          from: summoner
+        })
 
         await moveForwardPeriods(1)
-        await moloch.submitVote(secondProposalIndex, yes, { from: summoner })
+        await moloch.submitVote(secondProposalIndex, yes, {
+          from: summoner
+        })
 
         await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
         await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-        await moloch.processProposal(secondProposalIndex, { from: processor })
+        await moloch.processProposal(secondProposalIndex, {
+          from: processor
+        })
 
         // Force the transfer method on beta to revert
         await tokenBeta.updateTransfersReturningFalse(true)
@@ -521,8 +573,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           proposal3.tributeToken,
           proposal3.paymentRequested,
           proposal3.paymentToken,
-          proposal3.details,
-          { from: proposal2.applicant }
+          proposal3.details, {
+            from: proposal2.applicant
+          }
         )
 
         await fundAndApproveToMoloch({
@@ -532,20 +585,28 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           value: deploymentConfig.PROPOSAL_DEPOSIT
         })
 
-        await moloch.sponsorProposal(thirdProposalIndex, { from: summoner })
+        await moloch.sponsorProposal(thirdProposalIndex, {
+          from: summoner
+        })
 
         await moveForwardPeriods(1)
-        await moloch.submitVote(thirdProposalIndex, yes, { from: summoner })
+        await moloch.submitVote(thirdProposalIndex, yes, {
+          from: summoner
+        })
 
         await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
         await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-        await moloch.processProposal(thirdProposalIndex, { from: processor })
+        await moloch.processProposal(thirdProposalIndex, {
+            from: processor
+          })
           .should.be.rejectedWith('token payment to applicant failed')
       })
 
       it('require revert - fail to withdraw payment token with no revert message', async function () {
-        await moloch.processProposal(firstProposalIndex, { from: processor })
+        await moloch.processProposal(firstProposalIndex, {
+          from: processor
+        })
 
         // 2nd proposal for with token beta tribute
         await fundAndApproveToMoloch({
@@ -563,8 +624,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           proposal2.tributeToken,
           proposal2.paymentRequested,
           proposal2.paymentToken,
-          proposal2.details,
-          { from: proposal2.applicant }
+          proposal2.details, {
+            from: proposal2.applicant
+          }
         )
 
         await fundAndApproveToMoloch({
@@ -574,15 +636,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           value: deploymentConfig.PROPOSAL_DEPOSIT
         })
 
-        await moloch.sponsorProposal(secondProposalIndex, { from: summoner })
+        await moloch.sponsorProposal(secondProposalIndex, {
+          from: summoner
+        })
 
         await moveForwardPeriods(1)
-        await moloch.submitVote(secondProposalIndex, yes, { from: summoner })
+        await moloch.submitVote(secondProposalIndex, yes, {
+          from: summoner
+        })
 
         await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
         await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-        await moloch.processProposal(secondProposalIndex, { from: processor })
+        await moloch.processProposal(secondProposalIndex, {
+          from: processor
+        })
 
         // Force the transfer method on beta to revert
         await tokenBeta.updateTransfersEnabled(false)
@@ -596,8 +664,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           proposal3.tributeToken,
           proposal3.paymentRequested,
           proposal3.paymentToken,
-          proposal3.details,
-          { from: proposal2.applicant }
+          proposal3.details, {
+            from: proposal2.applicant
+          }
         )
 
         await fundAndApproveToMoloch({
@@ -607,15 +676,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
           value: deploymentConfig.PROPOSAL_DEPOSIT
         })
 
-        await moloch.sponsorProposal(thirdProposalIndex, { from: summoner })
+        await moloch.sponsorProposal(thirdProposalIndex, {
+          from: summoner
+        })
 
         await moveForwardPeriods(1)
-        await moloch.submitVote(thirdProposalIndex, yes, { from: summoner })
+        await moloch.submitVote(thirdProposalIndex, yes, {
+          from: summoner
+        })
 
         await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
         await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-        await moloch.processProposal(thirdProposalIndex, { from: processor })
+        await moloch.processProposal(thirdProposalIndex, {
+            from: processor
+          })
           .should.be.rejectedWith(SolRevert)
       })
     })
@@ -640,8 +715,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         proposal2.tributeToken,
         proposal2.paymentRequested,
         proposal2.paymentToken,
-        proposal2.details,
-        { from: proposal2.applicant }
+        proposal2.details, {
+          from: proposal2.applicant
+        }
       )
 
       await fundAndApproveToMoloch({
@@ -652,7 +728,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
       })
 
       // sponsor
-      await moloch.sponsorProposal(firstProposalIndex, { from: summoner })
+      await moloch.sponsorProposal(firstProposalIndex, {
+        from: summoner
+      })
 
       await verifyFlags({
         moloch: moloch,
@@ -662,7 +740,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
 
       // vote
       await moveForwardPeriods(1)
-      await moloch.submitVote(firstProposalIndex, yes, { from: summoner })
+      await moloch.submitVote(firstProposalIndex, yes, {
+        from: summoner
+      })
 
       await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
       await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
@@ -707,14 +787,18 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
       await tokenBeta.updateTransfersReturningFalse(true)
 
       // fails as token has transfer disabled (fails moving to guild bank)
-      await moloch.processProposal(firstProposalIndex, { from: processor })
+      await moloch.processProposal(firstProposalIndex, {
+          from: processor
+        })
         .should.be.rejectedWith('token transfer to guild bank failed')
 
       // move past emergency exit
       await moveForwardPeriods(deploymentConfig.EMERGENCY_EXIT_WAIT_IN_PERIODS)
 
       // should process
-      await moloch.processProposal(firstProposalIndex, { from: processor })
+      await moloch.processProposal(firstProposalIndex, {
+        from: processor
+      })
 
       await verifyProcessProposal({
         moloch: moloch,
@@ -786,8 +870,9 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         proposal1.tributeToken,
         proposal1.paymentRequested,
         proposal1.paymentToken,
-        proposal1.details,
-        { from: proposal1.applicant }
+        proposal1.details, {
+          from: proposal1.applicant
+        }
       )
 
       await fundAndApproveToMoloch({
@@ -797,15 +882,21 @@ contract('Moloch', ([creator, summoner, applicant1, applicant2, processor, deleg
         value: deploymentConfig.PROPOSAL_DEPOSIT
       })
 
-      await moloch.sponsorProposal(secondProposalIndex, { from: summoner })
+      await moloch.sponsorProposal(secondProposalIndex, {
+        from: summoner
+      })
 
       await moveForwardPeriods(1)
-      await moloch.submitVote(secondProposalIndex, yes, { from: summoner })
+      await moloch.submitVote(secondProposalIndex, yes, {
+        from: summoner
+      })
 
       await moveForwardPeriods(deploymentConfig.VOTING_DURATON_IN_PERIODS)
       await moveForwardPeriods(deploymentConfig.GRACE_DURATON_IN_PERIODS)
 
-      await moloch.processProposal(secondProposalIndex, { from: processor })
+      await moloch.processProposal(secondProposalIndex, {
+        from: processor
+      })
 
       await verifyBalances({
         token: depositToken,
