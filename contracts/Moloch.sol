@@ -13,7 +13,9 @@ pragma solidity 0.5.3;
 
 import "./oz/SafeMath.sol";
 import "./oz/IERC20.sol";
-import "./GuildBank.sol";
+//import "./GuildBank.sol";
+import "./SafeGuildBank.sol";
+import "./SafeERC20.sol";
 
 contract Moloch {
     using SafeMath for uint256;
@@ -31,7 +33,7 @@ contract Moloch {
     uint256 public summoningTime; // needed to determine the current period
 
     IERC20 public approvedToken; // approved token contract reference; default = wETH
-    GuildBank public guildBank; // guild bank contract reference
+    SafeGuildBank public guildBank; // guild bank contract reference
 
     // HARD-CODED LIMITS
     // These numbers are quite arbitrary; they are small enough to avoid overflows when doing calculations
@@ -132,7 +134,7 @@ contract Moloch {
 
         approvedToken = IERC20(_approvedToken);
 
-        guildBank = new GuildBank(_approvedToken);
+        guildBank = new SafeGuildBank(_approvedToken);
 
         periodDuration = _periodDuration;
         votingPeriodLength = _votingPeriodLength;
@@ -176,10 +178,10 @@ contract Moloch {
         address memberAddress = memberAddressByDelegateKey[msg.sender];
 
         // collect proposal deposit from proposer and store it in the Moloch until the proposal is processed
-        require(approvedToken.transferFrom(msg.sender, address(this), proposalDeposit), "Moloch::submitProposal - proposal deposit token transfer failed");
+        require(SafeERC20.safeTransferFrom(approvedToken, msg.sender, address(this), proposalDeposit), "Moloch::submitProposal - proposal deposit token transfer failed");
 
         // collect tribute from applicant and store it in the Moloch until the proposal is processed
-        require(approvedToken.transferFrom(applicant, address(this), tokenTribute), "Moloch::submitProposal - tribute token transfer failed");
+        require(SafeERC20.safeTransferFrom(approvedToken, applicant, address(this), tokenTribute), "Moloch::submitProposal - tribute token transfer failed");
 
         // compute startingPeriod for proposal
         uint256 startingPeriod = max(
@@ -296,7 +298,7 @@ contract Moloch {
 
             // transfer tokens to guild bank
             require(
-                approvedToken.transfer(address(guildBank), proposal.tokenTribute),
+                SafeERC20.safeTransfer(approvedToken, address(guildBank), proposal.tokenTribute),
                 "Moloch::processProposal - token transfer to guild bank failed"
             );
 
@@ -304,20 +306,20 @@ contract Moloch {
         } else {
             // return all tokens to the applicant
             require(
-                approvedToken.transfer(proposal.applicant, proposal.tokenTribute),
+                SafeERC20.safeTransfer(approvedToken, proposal.applicant, proposal.tokenTribute),
                 "Moloch::processProposal - failing vote token transfer failed"
             );
         }
 
         // send msg.sender the processingReward
         require(
-            approvedToken.transfer(msg.sender, processingReward),
+            SafeERC20.safeTransfer(approvedToken, msg.sender, processingReward),
             "Moloch::processProposal - failed to send processing reward to msg.sender"
         );
 
         // return deposit to proposer (subtract processing reward)
         require(
-            approvedToken.transfer(proposal.proposer, proposalDeposit.sub(processingReward)),
+            SafeERC20.safeTransfer(approvedToken, proposal.proposer, proposalDeposit.sub(processingReward)),
             "Moloch::processProposal - failed to return proposal deposit to proposer"
         );
 
@@ -367,7 +369,7 @@ contract Moloch {
 
         // return all tokens to the applicant
         require(
-            approvedToken.transfer(proposal.applicant, tokensToAbort),
+            SafeERC20.safeTransfer(approvedToken, proposal.applicant, tokensToAbort),
             "Moloch::processProposal - failed to return tribute to applicant"
         );
 
